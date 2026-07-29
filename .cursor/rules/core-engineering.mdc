@@ -1,0 +1,31 @@
+---
+description: Core engineering practices — TDD, ADR, cognitive load, MECE, RCA
+alwaysApply: true
+---
+
+# Core engineering
+
+このリポジトリでは次をデフォルト動作とする。詳細は対応 skill を読む。
+
+## ルーティング
+
+| 状況 | Skill |
+|---|---|
+| 機能・バグ修正の実装 | `tdd` |
+| 技術・データソース・境界の選択 | `adr` |
+| 調査・候補比較・優先度付け | `mece-analysis` |
+| 不具合・想定外の原因追及 | `root-cause-analysis` |
+| モジュール分割・Interface 設計 | `cognitive-design` |
+
+## 非交渉ルール
+
+1. **TDD**: 振る舞い変更は Red → Green。テストなしの実装完了を宣言しない
+2. **ADR**: データソース系統・保管・パイプライン境界は `docs/adr/` に記録してから確定
+3. **認知負荷**: 深い Module（小さい Interface）。1 ターンで扱う関心は最小限
+4. **MECE**: 解析・比較は評価軸と判定基準を表にする。軸なし箇条書きで終わらない
+5. **RCA**: 症状パッチ禁止。再現ループ → なぜなぜ → 修正 → 回帰テスト
+
+## ドメイン禁忌（短縮）
+
+- 「実ページ scrape のトレンド」と「イベント再計算の代替トレンド」を同一視しない
+- 詳細は `trending-data-research-handoff.md` と rule `domain-trending`

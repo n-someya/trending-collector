@@ -1,0 +1,9 @@
+# Local / generated
+__pycache__/
+*.pyc
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+!.env.example

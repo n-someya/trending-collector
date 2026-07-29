@@ -1,0 +1,32 @@
+---
+description: Cognitive load and cognitive rhythm for module and session design
+alwaysApply: true
+---
+
+# Cognitive load / 認知リズム
+
+## 認知リズム
+
+1 セッション（または 1 ターン群）は **1 つの認知モード** に留める。
+
+| モード | やること | 混ぜてはいけないこと |
+|---|---|---|
+| 広げる | 調査・MECE・選択肢列挙 | 本番実装 |
+| 決める | ADR・Seam 合意 | 大規模リファクタ |
+| 狭める | TDD 1 slice | 別機能の先取り |
+| 確かめる | 再現・回帰・レビュー | 新規設計の追加 |
+
+モード切替時は一文で宣言する（例:「調査を閉じ、ADR に入ります」）。
+
+## 認知負荷を下げる設計
+
+- **深い Module**: 小さい Interface の裏に多くの振る舞い
+- **Seam でテスト**: 内部に手を突っ込まない
+- **Locality**: 変更・バグ知識が 1 箇所に集まる形を選ぶ
+- 用語は skill `cognitive-design` の glossary（Module / Interface / Seam / Depth）に合わせる
+
+## エージェント出力のリズム
+
+- 先に結論または次ゲートを 1〜2 文
+- 長い比較表の前に評価軸を先出し
+- 実装時は「今の Red」「通す最小 Green」だけを示す

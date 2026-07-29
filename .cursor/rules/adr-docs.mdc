@@ -1,0 +1,14 @@
+---
+description: Conventions when writing or updating Architecture Decision Records
+globs: docs/adr/**/*.md
+alwaysApply: false
+---
+
+# ADR file conventions
+
+- ファイル名: `NNNN-short-kebab-title.md`
+- テンプレート: `docs/templates/adr.md`
+- Index (`docs/adr/README.md`) を更新する
+- Options は評価軸つき表で比較する（軸なし Pros/Cons だけは不可）
+- ドメイン関連なら「実トレンド / 代替トレンド」を Context に明記
+- 作成手順は skill `adr`

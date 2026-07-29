@@ -1,0 +1,35 @@
+---
+description: Domain invariants for Git hosting trending collection and analysis
+alwaysApply: true
+---
+
+# Domain — trending collector
+
+## 目的
+
+日次で trending 上位リポジトリのスナップショットを取得・保存し、検索用 DB へ取り込む。
+
+## プラットフォーム
+
+優先: **GitHub / GitLab / Gitee**。Bitbucket 等の公開ディスカバリ無しは対象外寄り。
+
+## データ系統（混同禁止）
+
+| 系統 | 意味 | 扱い |
+|---|---|---|
+| 実ページ scrape | `github.com/trending` 等の本物 | 「実トレンド」とラベル |
+| イベント再計算 | GH Archive 等から独自算出 | 「代替トレンド」。実トレンドの代替にしない |
+
+OSS Insight 等は後者。設計・解析・ADR・コメントで必ず区別する。
+
+## スナップショット性
+
+GitHub Trending は日に複数回再計算されうる。アーカイブが 1 日 1 回なら「その瞬間のスナップショット」である。
+
+## 競合の現実
+
+GitHub Trending 相当は競合にほぼ無い。累計スター順や更新順を trending と呼ばない。
+
+## 参照
+
+調査詳細: `trending-data-research-handoff.md`
