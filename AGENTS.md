@@ -47,4 +47,6 @@ Git ホスティングの trending を収集・解析・保管するリポジト
 
 ## 検証
 
-実装・テストランナーが決まったら、ここにコマンドを追記する。現状は設計前のため未定義。
+- `bun test` — 全テスト
+- `bun run typecheck` — TypeScript 型検査
+- `bun run verify:growth` — Git snapshot 容量ゲート

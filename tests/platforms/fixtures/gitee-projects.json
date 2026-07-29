@@ -1,0 +1,20 @@
+[
+  {
+    "id": 101,
+    "full_name": "openharmony/docs",
+    "html_url": "https://gitee.com/openharmony/docs",
+    "stargazers_count": 5600,
+    "forks_count": 9200,
+    "language": "C++",
+    "pushed_at": "2026-07-28T01:40:00+08:00"
+  },
+  {
+    "id": 102,
+    "full_name": "example/bun-tool",
+    "html_url": "https://gitee.com/example/bun-tool",
+    "stargazers_count": 88,
+    "forks_count": 4,
+    "language": "TypeScript",
+    "pushed_at": "2026-07-28T01:50:00+08:00"
+  }
+]

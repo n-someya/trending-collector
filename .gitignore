@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 .DS_Store
+.verification/
+node_modules/
 
 # Env / secrets
 .env

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "platform": "gitee",
+  "cohortId": "gitee-language-radar-v1",
+  "maxCarryOver": 35,
+  "requestBudget": 55
+}

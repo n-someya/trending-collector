@@ -1,0 +1,41 @@
+{
+  "took": 12,
+  "hits": {
+    "total": { "value": 2, "relation": "eq" },
+    "max_score": 10,
+    "hits": [
+      {
+        "_index": 1027,
+        "_id": "19705367",
+        "_score": 10,
+        "fields": {
+          "last_push_at": ["2026-07-21 11:35:58"],
+          "count.star": [16323],
+          "title": ["显示名/go-view"],
+          "url": ["https://gitee.com/dromara/go-view"],
+          "path": ["go-view"],
+          "count.fork": [5070],
+          "langs": ["Vue", "TypeScript"],
+          "id": [19705367],
+          "owner.path.keyword": ["yu199195"]
+        }
+      },
+      {
+        "_index": 1027,
+        "_id": "4169",
+        "_score": 9,
+        "fields": {
+          "last_push_at": ["2026-07-27 17:58:04"],
+          "count.star": [9950],
+          "title": ["卓源软件/JeeSite"],
+          "url": ["https://gitee.com/thinkgem/jeesite"],
+          "path": ["jeesite"],
+          "count.fork": [4048],
+          "langs": ["Java", "TypeScript"],
+          "id": [4169],
+          "owner.path.keyword": ["thinkgem"]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "platform": "gitee",
+  "repositories": [
+    {
+      "fullName": "dromara/go-view",
+      "repositoryId": "19705367",
+      "seedQuery": "TypeScript",
+      "url": "https://gitee.com/dromara/go-view"
+    },
+    {
+      "fullName": "thinkgem/jeesite",
+      "repositoryId": "4169",
+      "seedQuery": "TypeScript",
+      "url": "https://gitee.com/thinkgem/jeesite"
+    },
+    {
+      "fullName": "anyup/uView-Pro",
+      "repositoryId": "41666645",
+      "seedQuery": "TypeScript",
+      "url": "https://gitee.com/anyup/uView-Pro"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": "gitee_search_ui_seed",
+  "updatedAt": "2026-07-29T07:00:00.000Z"
+}

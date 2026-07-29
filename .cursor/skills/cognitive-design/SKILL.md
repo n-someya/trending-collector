@@ -34,7 +34,7 @@ description: Design deep modules with low cognitive load and clear seams. Use wh
 
 | Module 候補 | 隠しうること |
 |---|---|
-| Source adapter | HTTP/scrape/認証の詳細 |
+| GitRepoDataSource adapter | HTTP/scrape/認証の詳細 |
 | Normalizer | プラットフォーム差分 → 共通レコード |
 | Snapshot store | ファイル/DB の物理配置 |
 | Loader | 検索 DB 投入の詳細 |

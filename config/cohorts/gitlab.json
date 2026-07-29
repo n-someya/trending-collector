@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "platform": "gitlab",
+  "cohortId": "gitlab-default-v1",
+  "popularLimit": 1000,
+  "activeLimit": 1000,
+  "maxCarryOver": 1000,
+  "requestBudget": 1500
+}

@@ -117,20 +117,24 @@ GitLabのTrendingは**スター増ではなく notes（コメント）数ベー�
 
 ### 5-2. API の documented / undocumented 境界
 
+> 2026-07-28 再確認: 初回調査時から公式仕様が更新され、`star_count`
+> order が documented になった。以下は現行仕様。
+
 | 項目 | 状態 |
 |---|---|
-| `GET /api/v4/projects` の `order_by` 有効値 | **documented**: `id, name, path, created_at, updated_at, last_activity_at`（既定 created_at）。**スター順は列挙に含まれない** |
-| `sort=stars_desc` | **undocumented**。WebのExploreが使うパラメータで、`?order_by=id&sort=stars_desc` の形でAPIでも動くとフォーラムで報告あり。保証なしとして扱う |
+| `GET /api/v4/projects` の `order_by` 有効値 | **documented**: `id, name, path, created_at, updated_at, star_count, last_activity_at, similarity`（既定 created_at） |
+| `order_by=star_count&sort=desc` | **documented**。累計スター上位の discovery に利用できる。ただし公式 UI Trending や star velocity ではない |
+| keyset pagination | Projects は `order_by=id` のみ。`star_count` / `last_activity_at` 上位取得は offset pagination（50,000件上限） |
 | UIのTrendingタブ（`explore/projects/trending`） | **APIに露出していない**。REST/GraphQLから直接取得不可 |
-| star順ソート追加要望 | gitlab#296021 / #531442 でオープン（projectsインデックスに `stars_count` はあるが未使用） |
 
 ### 5-3. 推奨アプローチ（provenance安全）
 
 documentedな範囲のみで構成する:
 
 ```
+GET /api/v4/projects?order_by=star_count&sort=desc&visibility=public&per_page=100
 GET /api/v4/projects?order_by=last_activity_at&sort=desc&visibility=public&per_page=100
-（keysetページング）
+（上位ページだけを offset pagination）
 → 各 star_count を日次スナップショット → 前日差分＝自前トレンド
 ```
 
@@ -150,16 +154,25 @@ GET /api/v4/projects?order_by=last_activity_at&sort=desc&visibility=public&per_p
 
 ### 6-2. 公式 Open API v5
 
-正確なsort対応値は `https://gitee.com/api/v5/swagger` を直接参照（robots.txtで自動取得不可のため未検証）。
+2026-07-28 時点で OpenAPI 由来 SDK の定義を再確認した。実サービスでの
+互換性は collector の contract test で固定する。
 
 | 項目 | 状態 |
 |---|---|
-| リポジトリ検索（search_repositories） | star数・言語・説明を含む結果を返すが、**既定の並びは関連性スコア `_score` 順**。スター順ソートではない |
+| リポジトリ検索（search_repositories） | `q` 必須。`sort` は `created_at, last_push_at, stars_count, forks_count, watches_count`、`order` は asc/desc、`per_page` は最大100。sort省略時は関連性順 |
 | GVP / recommend の識別 | `get_repository_type` の `gvp`（Gitee Most Valuable Project）・`recommend` フラグで判定可 |
 | ユーザー単位リポジトリ一覧 | `list_user_repos` が `stargazers_count` を含む完全なリポジトリオブジェクトを返す |
 | trending API | **存在しない** |
 
-**帰結:** 「累計スター上位」も検索APIのsortに頼らず、対象集合を集めて**クライアント側で `stargazers_count` ソート**するのが確実。
+**帰結:** query/language ごとの候補 discovery には `stars_count` /
+`last_push_at` sort を使える。ただし `q` 必須のため全 Gitee 横断ではなく、
+設定済み query cohort であることを provenance に残す。
+
+> 2026-07-29 実 API contract: 匿名の repository detail は取得できたが、
+> search は HTTP 200 / 空配列を返した。response header の rate limit は
+> 60 requests。初期 collector は `GITEE_TOKEN` を必須とし、日次 budget を
+> 55（discovery 20 + carry-over 最大35）に制限する。認証後も空の場合は
+> complete snapshot とせず schema/query drift として失敗させる。
 
 ### 6-3. 推奨アプローチ
 
@@ -216,23 +229,35 @@ GET /api/v4/projects?order_by=last_activity_at&sort=desc&visibility=public&per_p
 
 ---
 
-## 10. 未決事項 / 次に議論すべき論点
+## 10. 設計判断（2026-07-29 追記）
 
-1. **自前トレンド定義の具体化**
-   GitLab/Giteeでは**全公開リポジトリを毎日走査するのは非現実的**。母集団の絞り方が設計の分岐点:
-   - (a) watchlist方式: 既知の上位N件を継続追跡
-   - (b) 最近活動があったものだけ走査（`last_activity_at` 順）
-   - (c) ハイブリッド
+1. **自前トレンド定義**
+   - 全公開リポジトリ走査ではなく、人気上位・最近活動・前日 carry-over
+     のハイブリッド cohort を採用
+   - 指標名は `tracked_cohort_star_delta`
+   - 詳細: [ADR-0001](docs/adr/0001-define-tracked-cohort-star-delta.md)
 
-2. star差分の正規化（絶対増分 vs 相対増分。新規リポジトリの扱い）
+2. **star 差分**
+   - 絶対増分を primary ranking とする
+   - 新規リポジトリは翌日も観測できるまでランキング対象外
+   - 相対増分・複数日 rate は別 field / artifact
 
-3. スナップショットの保存形式（JSON/git履歴 vs 直接DB）と検索DBへのETL設計
+3. **スナップショット保管**
+   - この Git repo に deterministic NDJSON を保存
+   - 500 MB で R2/別 data repo を再検討、1 GB 到達前に移行
+   - 詳細: [ADR-0002](docs/adr/0002-store-daily-snapshots-in-git.md)
 
-4. GitHub側: Azka20データセットでの初期ロード有無（通算トレンド回数を持つか）
+4. **実行基盤**
+   - Bun + TypeScript を GitHub Actions で日次実行
+   - Cloudflare は Actions の信頼性・実行時間・接続性に問題が出た場合に再検討
+   - 詳細: [ADR-0003](docs/adr/0003-run-collectors-on-github-actions.md)
 
-5. 実装言語・実行基盤（TypeScript前提／GitHub Actions cron想定）
+5. **引き続き未決**
+   - GitHub 側の Azka20 初期ロード有無
+   - Gitee query cohort の初期 language/topic セット
+   - 検索 DB の選定と loader
 
-6. Gitee scrapeの法務・robots確認（`gitee.com/api/v5/swagger` はrobots.txtで自動取得不可だった＝サイト全体のポリシー確認が必要）
+Gitee Explore scrape は初期スコープ外。追加時には法務・robots確認を行う。
 
 ---
 
@@ -240,4 +265,4 @@ GET /api/v4/projects?order_by=last_activity_at&sort=desc&visibility=public&per_p
 
 - **「トレンド」の意味が3者で異なる** — GitHub=スター増、GitLab=コメント数、Gitee=キュレーション。統合スキーマでは必ず区別する
 - **「実トレンド」vs「代替トレンド」** — OSS Insight / GH Archive由来は再計算値であり、`github.com/trending` の履歴ではない
-- **documented vs undocumented** — GitLabの `sort=stars_desc` は公式列挙外。依存する場合はその旨を明記して運用する
+- **documented vs contract-tested** — GitLab の `order_by=star_count` は documented。Gitee の OpenAPI 由来 sort は実 API contract test でも固定する
