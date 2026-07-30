@@ -4,6 +4,7 @@ import type {
   Platform,
   RepositoryObservation,
   Snapshot,
+  SnapshotRepositoryObservation,
   TrendRanking,
 } from "../domain/types";
 import type { GitRepoDataSource } from "../platforms/git-repo-data-source";
@@ -47,22 +48,23 @@ interface CollectPlatformInput {
 export async function collectPlatform(
   input: CollectPlatformInput,
 ): Promise<CollectionResult> {
-  // 1) Discovery: ask the platform DataSource for today's popular/active
-  //    observations (already include current star counts).
+  // 1) Discovery: プラットフォーム DataSource から本日の popular/active 観測を取得
+  //    （この時点で現行のスター数を含む）
   const discovery = await input.dataSource.discover();
 
-  // Previous snapshot members are candidates for continuity, not yet
-  // re-observed this run.
+  // 前回スナップショットのメンバーは継続観測の候補。まだ再観測はしていない。
   const previousRepositories =
     input.previous?.repositories.map(({ repositoryId, fullName }) => ({
       repositoryId,
       fullName,
     })) ?? [];
+  const previousIds = new Set(
+    previousRepositories.map((repository) => repository.repositoryId),
+  );
 
-  // 2) Cohort plan: merge discovery into `discovered`, and select carry-over
-  //    refs — repositories that were in the previous snapshot but are absent
-  //    from today's discovery. Those still need a fresh star observation so
-  //    adjacent-day deltas remain computable within the request budget.
+  // 2) Cohort 計画: discovery を discovered にまとめ、carry-over 参照を選ぶ。
+  //    carry-over = 前回スナップショットにはいたが、本日の discovery には無いもの。
+  //    隣接日の星デルタを計算し続けるため、予算内で現行スターの再観測が必要。
   const cohort = planCohort({
     platform: input.platform,
     popular: discovery.popular,
@@ -73,8 +75,8 @@ export async function collectPlatform(
     maxCarryOver: input.maxCarryOver,
   });
 
-  // 3) Carry-over observe: detail/fetch current stars for those continuing
-  //    members. Discovery already observed its set; carry-over only has refs.
+  // 3) Carry-over 観測: 継続メンバーの現行スターを detail 取得する。
+  //    discovery 側は既に観測済み。carry-over は参照だけなのでここで初めて星が付く。
   const carryOver =
     cohort.carryOverRepositories.length > 0
       ? await input.dataSource.observe(cohort.carryOverRepositories)
@@ -88,11 +90,15 @@ export async function collectPlatform(
   const errors = [...discovery.errors, ...carryOver.errors];
   const complete = discovery.complete && carryOver.complete;
 
-  // 4) Today's cohort realization: discovered ∪ carry-over, deduped by id.
-  const repositories = mergeObservations([
-    ...cohort.discovered,
-    ...carryOver.repositories,
-  ]);
+  // 4) 本日の実現 cohort: discovered ∪ carry-over を一意化し、
+  //    前回集合との差で cohortContinuity（new / continuing）を付与する。
+  const repositories = labelContinuity(
+    mergeObservations([
+      ...cohort.discovered,
+      ...carryOver.repositories,
+    ]),
+    previousIds,
+  );
   const snapshot: Snapshot = {
     schemaVersion: 1,
     platform: input.platform,
@@ -102,9 +108,9 @@ export async function collectPlatform(
     repositories,
   };
 
-  // 5) Ranking only when both sides are complete and same platform/cohort.
-  //    Stars delta uses repositories present in both snapshots; brand-new
-  //    discoveries wait until a later baseline exists.
+  // 5) ランキング: 両側が complete かつ同一 platform/cohort のときのみ。
+  //    星デルタは両スナップショットに存在するリポジトリだけ。
+  //    新規 discovery は基準観測ができるまで順位付けしない。
   const compatiblePrevious =
     input.previous?.complete &&
     input.previous.platform === input.platform &&
@@ -137,6 +143,18 @@ export async function collectPlatform(
       errors,
     },
   };
+}
+
+function labelContinuity(
+  observations: RepositoryObservation[],
+  previousIds: Set<string>,
+): SnapshotRepositoryObservation[] {
+  return observations.map((observation) => ({
+    ...observation,
+    cohortContinuity: previousIds.has(observation.repositoryId)
+      ? "continuing"
+      : "new",
+  }));
 }
 
 function mergeObservations(

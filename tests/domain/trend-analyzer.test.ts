@@ -18,6 +18,7 @@ const previous: Snapshot = {
       forks: 10,
       lastActivityAt: "2026-07-27T01:00:00.000Z",
       candidateSources: ["popular"],
+      cohortContinuity: "continuing",
     },
     {
       platform: "gitlab",
@@ -28,6 +29,7 @@ const previous: Snapshot = {
       forks: 2,
       lastActivityAt: "2026-07-27T01:30:00.000Z",
       candidateSources: ["active"],
+      cohortContinuity: "continuing",
     },
   ],
 };
@@ -49,6 +51,7 @@ describe("TrendAnalyzer", () => {
           forks: 1,
           lastActivityAt: "2026-07-28T01:30:00.000Z",
           candidateSources: ["active"],
+          cohortContinuity: "new",
         },
       ],
     };

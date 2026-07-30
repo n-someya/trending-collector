@@ -36,6 +36,7 @@ describe("SnapshotRepository", () => {
           forks: 2,
           lastActivityAt: "2026-07-28T00:00:00.000Z",
           candidateSources: ["active"],
+      cohortContinuity: "continuing",
         },
         {
           platform: "gitlab",
@@ -48,6 +49,7 @@ describe("SnapshotRepository", () => {
           topics: ["bun"],
           lastActivityAt: "2026-07-28T01:00:00.000Z",
           candidateSources: ["popular", "active"],
+      cohortContinuity: "continuing",
         },
       ],
     };
@@ -58,8 +60,8 @@ describe("SnapshotRepository", () => {
     expect(second).toEqual(first);
     expect(await readFile(first.path, "utf8")).toBe(
       [
-        '{"candidateSources":["popular","active"],"forks":3,"fullName":"group/three","language":"TypeScript","lastActivityAt":"2026-07-28T01:00:00.000Z","platform":"gitlab","repositoryId":"3","stars":30,"topics":["bun"],"url":"https://gitlab.com/group/three"}',
-        '{"candidateSources":["active"],"forks":2,"fullName":"group/twenty","lastActivityAt":"2026-07-28T00:00:00.000Z","platform":"gitlab","repositoryId":"20","stars":20,"url":"https://gitlab.com/group/twenty"}',
+        '{"candidateSources":["popular","active"],"cohortContinuity":"continuing","forks":3,"fullName":"group/three","language":"TypeScript","lastActivityAt":"2026-07-28T01:00:00.000Z","platform":"gitlab","repositoryId":"3","stars":30,"topics":["bun"],"url":"https://gitlab.com/group/three"}',
+        '{"candidateSources":["active"],"cohortContinuity":"continuing","forks":2,"fullName":"group/twenty","lastActivityAt":"2026-07-28T00:00:00.000Z","platform":"gitlab","repositoryId":"20","stars":20,"url":"https://gitlab.com/group/twenty"}',
         "",
       ].join("\n"),
     );
@@ -94,6 +96,7 @@ describe("SnapshotRepository", () => {
           forks: 9200,
           lastActivityAt: "2026-07-28T01:00:00.000Z",
           candidateSources: ["popular"],
+      cohortContinuity: "continuing",
         },
       ],
     };

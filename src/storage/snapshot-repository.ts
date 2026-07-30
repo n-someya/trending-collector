@@ -11,6 +11,7 @@ import type {
   Platform,
   RepositoryObservation,
   Snapshot,
+  SnapshotRepositoryObservation,
 } from "../domain/types";
 
 export interface SavedSnapshot {
@@ -82,7 +83,7 @@ export class FileSnapshotRepository {
       const repositories = content
         .split("\n")
         .filter(Boolean)
-        .map((line) => JSON.parse(line) as RepositoryObservation);
+        .map((line) => JSON.parse(line) as SnapshotRepositoryObservation);
       return { ...metadata, repositories };
     } catch (error) {
       if (isMissingFile(error)) {

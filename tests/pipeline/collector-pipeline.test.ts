@@ -19,6 +19,7 @@ const previous: Snapshot = {
       forks: 1,
       lastActivityAt: "2026-07-27T01:00:00.000Z",
       candidateSources: ["popular"],
+      cohortContinuity: "new",
     },
     {
       platform: "gitlab",
@@ -29,6 +30,7 @@ const previous: Snapshot = {
       forks: 2,
       lastActivityAt: "2026-07-27T01:00:00.000Z",
       candidateSources: ["active"],
+      cohortContinuity: "new",
     },
   ],
 };
@@ -63,8 +65,13 @@ describe("CollectorPipeline", () => {
         return {
           repositories: [
             {
-              ...previous.repositories[1]!,
+              platform: "gitlab",
+              repositoryId: "2",
+              fullName: "group/carry",
+              url: "https://gitlab.com/group/carry",
               stars: 27,
+              forks: 2,
+              lastActivityAt: "2026-07-27T01:00:00.000Z",
               candidateSources: ["carry_over"],
             },
           ],
@@ -88,6 +95,16 @@ describe("CollectorPipeline", () => {
     expect(result.snapshot.complete).toBe(true);
     expect(result.snapshot.repositories.map((repository) => repository.repositoryId))
       .toEqual(["1", "3", "2"]);
+    expect(
+      result.snapshot.repositories.map((repository) => ({
+        id: repository.repositoryId,
+        continuity: repository.cohortContinuity,
+      })),
+    ).toEqual([
+      { id: "1", continuity: "continuing" },
+      { id: "3", continuity: "new" },
+      { id: "2", continuity: "continuing" },
+    ]);
     expect(result.ranking?.entries.map((entry) => entry.repositoryId)).toEqual([
       "2",
       "1",

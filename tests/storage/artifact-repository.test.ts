@@ -59,6 +59,7 @@ function collectionResult(): CollectionResult {
           forks: 1,
           lastActivityAt: "2026-07-28T01:00:00.000Z",
           candidateSources: ["popular"],
+      cohortContinuity: "continuing",
         },
       ],
     },
