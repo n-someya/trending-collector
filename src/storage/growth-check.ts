@@ -14,6 +14,29 @@ export interface GrowthReport {
   exceedsHardGate: boolean;
 }
 
+export interface GrowthGateResult {
+  exitCode: number;
+  warning?: string;
+}
+
+export function evaluateGrowthGates(report: GrowthReport): GrowthGateResult {
+  if (report.exceedsHardGate) {
+    return { exitCode: 1 };
+  }
+  if (report.exceedsWarningGate) {
+    return {
+      exitCode: 0,
+      warning:
+        `Repository data is ${report.totalBytes} bytes with a projected ` +
+        `annual growth of ${report.projectedAnnualBytes} bytes, reaching ` +
+        `the 500 MB warning gate (${WARNING_BYTES} bytes). Revisit the ` +
+        `storage strategy per ADR-0002 ` +
+        `(docs/adr/0002-store-daily-snapshots-in-git.md).`,
+    };
+  }
+  return { exitCode: 0 };
+}
+
 export async function measureGrowth(root: string): Promise<GrowthReport> {
   const dataRoot = join(root, "data");
   const files = await listFiles(dataRoot);
@@ -40,9 +63,7 @@ export async function measureGrowth(root: string): Promise<GrowthReport> {
   const projectedAnnualBytes =
     observedDays.size === 0
       ? 0
-      : Math.round(
-          (immutableBytes / observedDays.size + mutableBytes) * 365,
-        );
+      : Math.round((immutableBytes / observedDays.size) * 365) + mutableBytes;
   const totalBytes = immutableBytes + mutableBytes;
   return {
     immutableBytes,

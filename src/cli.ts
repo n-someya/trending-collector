@@ -9,7 +9,7 @@ import type { GitRepoDataSource } from "./platforms/git-repo-data-source";
 import { FileArtifactRepository } from "./storage/artifact-repository";
 import { publishBundle } from "./storage/bundle-publisher";
 import { saveWatchlist } from "./storage/gitee-watchlist";
-import { measureGrowth } from "./storage/growth-check";
+import { evaluateGrowthGates, measureGrowth } from "./storage/growth-check";
 import { RawArtifactWriter } from "./storage/raw-artifact-writer";
 import { FileSnapshotRepository } from "./storage/snapshot-repository";
 
@@ -78,8 +78,12 @@ async function verifyGrowth(arguments_: string[]): Promise<void> {
   const repositoryRoot = resolve(option(arguments_, "--repository") ?? ".");
   const report = await measureGrowth(repositoryRoot);
   console.log(JSON.stringify(report));
-  if (report.exceedsWarningGate || report.exceedsHardGate) {
-    process.exitCode = 1;
+  const gate = evaluateGrowthGates(report);
+  if (gate.warning && process.env.GITHUB_ACTIONS === "true") {
+    console.log(`::warning title=Repository growth gate::${gate.warning}`);
+  }
+  if (gate.exitCode !== 0) {
+    process.exitCode = gate.exitCode;
   }
 }
 
