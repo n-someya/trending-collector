@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 describe("FileArtifactRepository", () => {
-  test("publishes snapshot, ranking, state, and manifest idempotently", async () => {
+  test("publishes snapshot, ranking, and manifest idempotently", async () => {
     const root = await mkdtemp(join(tmpdir(), "trending-artifacts-"));
     temporaryDirectories.push(root);
     const repository = new FileArtifactRepository(root);
@@ -31,7 +31,6 @@ describe("FileArtifactRepository", () => {
       "data/snapshots/gitlab/2026/07/28.meta.json",
       "data/rankings/gitlab/2026/07/28.json",
       "data/runs/2026/07/28/gitlab.json",
-      "data/state/gitlab/candidates.ndjson",
     ]);
     expect(
       JSON.parse(

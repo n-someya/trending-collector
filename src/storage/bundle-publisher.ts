@@ -16,7 +16,9 @@ export async function publishBundle(
       join(inputRoot, "config", "watchlists"),
       inputRoot,
     )),
-  ].sort();
+  ]
+    .filter((path) => !isLegacyStatePath(path))
+    .sort();
 
   for (const path of files) {
     const source = join(inputRoot, path);
@@ -91,11 +93,12 @@ function associatedRunPath(path: string): string | null {
     : null;
 }
 
+function isLegacyStatePath(path: string): boolean {
+  return path.startsWith("data/state/");
+}
+
 function isMutablePath(path: string): boolean {
-  return (
-    path.startsWith("data/state/") ||
-    path.startsWith("config/watchlists/")
-  );
+  return path.startsWith("config/watchlists/");
 }
 
 async function readOptional(path: string): Promise<Buffer | null> {

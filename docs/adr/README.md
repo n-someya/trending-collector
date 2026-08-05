@@ -21,3 +21,4 @@
 | [0002](0002-store-daily-snapshots-in-git.md) | Store normalized daily snapshots in Git | Accepted |
 | [0003](0003-run-collectors-on-github-actions.md) | Run collectors on GitHub Actions | Accepted |
 | [0004](0004-gitee-seed-via-so-gitee.md) | Seed Gitee watchlists via so.gitee.com | Accepted |
+| [0005](0005-remove-data-state-duplicate.md) | Remove the data/state snapshot duplicate | Accepted |

@@ -1,9 +1,4 @@
-import {
-  copyFile,
-  mkdir,
-  readFile,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type { CollectionResult } from "../pipeline/collector-pipeline";
 import { deterministicJson } from "./deterministic-json";
@@ -55,16 +50,6 @@ export class FileArtifactRepository {
       `${deterministicJson(result.manifest)}\n`,
     );
     paths.push(runPath);
-
-    const statePath = join(
-      "data",
-      "state",
-      platform,
-      "candidates.ndjson",
-    );
-    await mkdir(dirname(join(this.root, statePath)), { recursive: true });
-    await copyFile(savedSnapshot.path, join(this.root, statePath));
-    paths.push(statePath);
 
     return { paths };
   }

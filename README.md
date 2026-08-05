@@ -59,8 +59,7 @@ from repository secrets.
 data/
 ├── snapshots/{platform}/YYYY/MM/DD.ndjson
 ├── rankings/{platform}/YYYY/MM/DD.json
-├── runs/YYYY/MM/DD/{platform}.json
-└── state/{platform}/candidates.ndjson
+└── runs/YYYY/MM/DD/{platform}.json
 
 config/watchlists/gitee.json   # auditable seed side effect of Gitee collect
 ```
