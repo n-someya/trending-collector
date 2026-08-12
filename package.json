@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "collect": "bun run src/cli.ts collect",
     "publish": "bun run src/cli.ts publish",
+    "post-ranking-issues": "bun run src/cli.ts post-ranking-issues",
     "verify:growth": "bun run src/cli.ts verify-growth"
   },
   "devDependencies": {

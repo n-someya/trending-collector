@@ -12,6 +12,8 @@ import { saveWatchlist } from "./storage/gitee-watchlist";
 import { evaluateGrowthGates, measureGrowth } from "./storage/growth-check";
 import { RawArtifactWriter } from "./storage/raw-artifact-writer";
 import { FileSnapshotRepository } from "./storage/snapshot-repository";
+import { HttpGitHubIssuesClient } from "./publishing/github-issues-client";
+import { postStandingIssueRankings } from "./publishing/standing-issue-rankings";
 
 interface BaseCohortConfig {
   schemaVersion: 1;
@@ -54,14 +56,54 @@ try {
     case "verify-growth":
       await verifyGrowth(arguments_);
       break;
+    case "post-ranking-issues":
+      await postRankingIssues(arguments_);
+      break;
     default:
       throw new Error(
-        "Usage: bun run src/cli.ts <collect|publish|verify-growth>",
+        "Usage: bun run src/cli.ts <collect|publish|verify-growth|post-ranking-issues>",
       );
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
+}
+
+async function postRankingIssues(arguments_: string[]): Promise<void> {
+  const repositoryRoot = resolve(option(arguments_, "--repository") ?? ".");
+  const snapshotDate = option(arguments_, "--date");
+  if (!snapshotDate) {
+    throw new Error("post-ranking-issues requires --date YYYY-MM-DD");
+  }
+  const topN = Number(option(arguments_, "--top-n") ?? "25");
+  if (!Number.isInteger(topN) || topN < 1) {
+    throw new Error(`Invalid --top-n: ${topN}`);
+  }
+  const platformOption = option(arguments_, "--platform");
+  const platforms: Platform[] = platformOption
+    ? [requiredPlatform(platformOption)]
+    : ["gitlab", "gitee"];
+
+  const repository = process.env.GITHUB_REPOSITORY;
+  const token = process.env.GITHUB_TOKEN;
+  if (!repository || !token) {
+    throw new Error(
+      "post-ranking-issues requires GITHUB_REPOSITORY and GITHUB_TOKEN",
+    );
+  }
+  const [owner, repo] = repository.split("/");
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`);
+  }
+
+  const results = await postStandingIssueRankings({
+    repositoryRoot,
+    snapshotDate,
+    platforms,
+    topN,
+    client: new HttpGitHubIssuesClient({ owner, repo, token }),
+  });
+  console.log(JSON.stringify({ posted: results }));
 }
 
 async function publish(arguments_: string[]): Promise<void> {

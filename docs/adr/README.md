@@ -22,3 +22,4 @@
 | [0003](0003-run-collectors-on-github-actions.md) | Run collectors on GitHub Actions | Accepted |
 | [0004](0004-gitee-seed-via-so-gitee.md) | Seed Gitee watchlists via so.gitee.com | Accepted |
 | [0005](0005-remove-data-state-duplicate.md) | Remove the data/state snapshot duplicate | Accepted |
+| [0006](0006-post-rankings-to-standing-github-issues.md) | Post daily Top-N rankings to standing Issues | Accepted |
