@@ -210,13 +210,39 @@ short-circuit marker are committed; publish copies only `data/**` and
 
 `.github/workflows/daily-snapshot.yml` runs at 02:17 UTC and supports manual
 platform/date reruns. Platform collectors are isolated; the publisher copies
-normalized `data/` artifacts and the Gitee watchlist, then commits once.
+normalized `data/` artifacts and the Gitee watchlist, commits once, then posts
+a Top-N Markdown summary to standing GitHub Issues
+([ADR-0006](docs/adr/0006-post-rankings-to-standing-github-issues.md)).
 
 Required repository setup:
 
 1. Add `GITEE_TOKEN` as an Actions secret (detail observation).
 2. Optionally add `GITLAB_TOKEN` for higher authenticated limits.
-3. Permit the workflow `GITHUB_TOKEN` to write repository contents.
+3. Permit the workflow `GITHUB_TOKEN` to write repository contents and issues.
+4. Bootstrap standing issues once (labels must match exactly):
+
+```bash
+gh label create ranking-daily-gitlab --color 0E8A16 --description "Daily GitLab cohort ranking comments"
+gh label create ranking-daily-gitee --color 1D76DB --description "Daily Gitee cohort ranking comments"
+
+gh issue create --title "Daily GitLab cohort rankings" \
+  --label ranking-daily-gitlab \
+  --body "Standing issue for Top-N \`tracked_cohort_star_delta\` comments. This is a self-computed alternative trend, not GitLab's official Trending UI. Subscribe to receive updates."
+
+gh issue create --title "Daily Gitee cohort rankings" \
+  --label ranking-daily-gitee \
+  --body "Standing issue for Top-N \`tracked_cohort_star_delta\` comments. This is a self-computed alternative trend, not an official Trending UI. Subscribe to receive updates."
+
+# Optional: lock conversation to keep the thread bot-only
+# gh issue lock <number>
+```
+
+Manual backfill of issue comments (does not rewrite git data):
+
+```bash
+GITHUB_TOKEN=... GITHUB_REPOSITORY=owner/repo \
+  bun run src/cli.ts post-ranking-issues --date 2026-08-05
+```
 
 The Gitee policy uses at most 55 detail requests per day because the live API
 reported a 60-request limit. Cohort settings live in `config/cohorts/`. Seed
