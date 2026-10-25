@@ -1,8 +1,22 @@
 # trending-collector
 
-GitLab and Gitee repositories are observed daily and ranked by star growth
-within a declared, budget-limited cohort. This is not an archive of either
-platform's official Trending UI.
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Daily Snapshot](https://github.com/n-someya/trending-collector/actions/workflows/daily-snapshot.yml/badge.svg)](https://github.com/n-someya/trending-collector/actions/workflows/daily-snapshot.yml)
+[![Bun](https://img.shields.io/badge/Bun-1.3.14-black?logo=bun)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-latest-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tracked Platforms](https://img.shields.io/badge/Platforms-GitLab%20%7C%20Gitee-FC6D26?logo=gitlab)](https://github.com/n-someya/trending-collector)
+
+> **Daily star growth tracker and alternative trending ranker for GitLab and Gitee repositories.**
+
+GitLab and Gitee repositories are observed daily and ranked by star growth within a declared, budget-limited cohort. Rather than scraping volatile or unofficial Trending UIs, `trending-collector` measures true cohort-based star deltas across reproducible daily snapshots.
+
+## Features
+
+- 🔭 **Daily Observation & Discovery**: Automatically discovers active and popular repositories across GitLab and Gitee within configured API budgets.
+- 📈 **Normalized Growth Metrics (`tracked_cohort_star_delta`)**: Accurately computes star velocity across clean, contiguous daily baselines.
+- 💾 **Deterministic Git Storage**: Stores daily snapshots (`.ndjson`) and rankings (`.json`) deterministically in Git for transparent versioning and diffs.
+- 📢 **Automated Community Updates**: Publishes daily Top-N trending reports into standing GitHub Issues for easy notifications and subscription.
+- 🛡️ **Budget & Rate-Limit Resilient**: Enforces strict API quotas, carry-over rules, and immutability guarantees for complete runs.
 
 ## Metric
 
@@ -257,3 +271,7 @@ bun run verify:growth
 At 500 MB, reconsider R2 or a separate data repository. Migration is required
 before this Git repository reaches 1 GB. See
 [ADR-0002](docs/adr/0002-store-daily-snapshots-in-git.md).
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.

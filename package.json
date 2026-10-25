@@ -1,6 +1,26 @@
 {
   "name": "trending-collector",
   "version": "0.1.0",
+  "description": "Daily star growth tracker and alternative trending ranker for GitLab and Gitee repositories",
+  "license": "Apache-2.0",
+  "author": "n-someya",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/n-someya/trending-collector.git"
+  },
+  "keywords": [
+    "trending",
+    "trending-repositories",
+    "star-tracker",
+    "gitlab",
+    "gitee",
+    "developer-tools",
+    "open-source",
+    "analytics",
+    "ranking",
+    "bun",
+    "typescript"
+  ],
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.14",
