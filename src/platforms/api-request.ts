@@ -23,13 +23,18 @@ export class ApiHttpError extends Error {
   }
 }
 
+const DEFAULT_MAX_RETRY_DELAY_MILLISECONDS = 60_000;
+
 interface JsonRequestOptions {
   provider: string;
   url: string;
+  method?: string;
   headers: Headers;
+  body?: string;
   fetch: FetchFunction;
   acquireRequest: () => boolean;
   retryDelayMilliseconds: number;
+  maxRetryDelayMilliseconds?: number;
   maxAttempts?: number;
   capture?: RawCapture;
 }
@@ -38,6 +43,8 @@ export async function requestJson<T>(
   options: JsonRequestOptions,
 ): Promise<T> {
   const maxAttempts = options.maxAttempts ?? 4;
+  const maxRetryDelayMilliseconds =
+    options.maxRetryDelayMilliseconds ?? DEFAULT_MAX_RETRY_DELAY_MILLISECONDS;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -46,7 +53,9 @@ export async function requestJson<T>(
     }
     try {
       const response = await options.fetch(options.url, {
+        ...(options.method ? { method: options.method } : {}),
         headers: options.headers,
+        ...(options.body !== undefined ? { body: options.body } : {}),
       });
       const body = await response.text();
       await options.capture?.({
@@ -66,12 +75,24 @@ export async function requestJson<T>(
       if (!isRetryable(response.status) || attempt === maxAttempts) {
         throw error;
       }
+      const delay = retryDelay(
+        response,
+        options.retryDelayMilliseconds,
+        attempt,
+      );
+      if (delay > maxRetryDelayMilliseconds) {
+        throw error;
+      }
       lastError = error;
-      await sleep(retryDelay(response, options.retryDelayMilliseconds, attempt));
+      await sleep(delay);
     } catch (error) {
       const normalized =
         error instanceof Error ? error : new Error(String(error));
-      if (isTerminalHttpError(normalized) || attempt === maxAttempts) {
+      if (
+        normalized === lastError ||
+        normalized instanceof ApiHttpError ||
+        attempt === maxAttempts
+      ) {
         throw normalized;
       }
       lastError = normalized;
@@ -111,10 +132,6 @@ function safeUrl(value: string): string {
 
 function isRetryable(status: number): boolean {
   return status === 429 || status >= 500;
-}
-
-function isTerminalHttpError(error: Error): boolean {
-  return error instanceof ApiHttpError ? !isRetryable(error.status) : false;
 }
 
 function retryDelay(

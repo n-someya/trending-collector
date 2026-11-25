@@ -103,7 +103,11 @@ describe("GitLabDataSource", () => {
       popularLimit: 0,
       activeLimit: 0,
       requestBudget: 1,
-      fetch: async () => new Response("not found", { status: 404 }),
+      fetch: async () =>
+        new Response(JSON.stringify({ data: { projects: { nodes: [] } } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
     });
 
     const result = await source.observe([
@@ -116,5 +120,122 @@ describe("GitLabDataSource", () => {
       complete: true,
       errors: [],
     });
+  });
+
+  test("batches carry-over observations in chunks of 100 via GraphQL", async () => {
+    const calls: Array<{
+      url: string;
+      method: string | undefined;
+      ids: string[];
+    }> = [];
+    const source = new GitLabDataSource({
+      token: "test-token",
+      popularLimit: 0,
+      activeLimit: 0,
+      requestBudget: 5,
+      fetch: async (input, init) => {
+        const parsed = JSON.parse(String(init?.body)) as {
+          variables: { ids: string[]; first: number };
+        };
+        calls.push({
+          url: String(input),
+          method: init?.method,
+          ids: parsed.variables.ids,
+        });
+        const nodes = parsed.variables.ids.map((gid, index) => {
+          const numericId = gid.replace("gid://gitlab/Project/", "");
+          return {
+            id: gid,
+            fullPath: `group/repo-${numericId}`,
+            webUrl: `https://gitlab.com/group/repo-${numericId}`,
+            starCount: Number(numericId),
+            forksCount: index,
+            lastActivityAt: "2026-11-23T10:00:00Z",
+            archived: numericId === "2",
+            topics: ["gitlab"],
+          };
+        });
+        return new Response(
+          JSON.stringify({ data: { projects: { nodes } } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      },
+    });
+
+    const refs = Array.from({ length: 105 }, (_, index) => ({
+      repositoryId: String(index + 1),
+      fullName: `group/repo-${index + 1}`,
+    }));
+
+    const result = await source.observe(refs);
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.url).toBe("https://gitlab.com/api/graphql");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.ids).toHaveLength(100);
+    expect(calls[1]?.ids).toHaveLength(5);
+    expect(result.complete).toBe(true);
+    expect(result.requestsUsed).toBe(2);
+    expect(result.repositories).toHaveLength(104);
+    expect(result.repositories[0]).toEqual({
+      platform: "gitlab",
+      repositoryId: "1",
+      fullName: "group/repo-1",
+      url: "https://gitlab.com/group/repo-1",
+      stars: 1,
+      forks: 0,
+      topics: ["gitlab"],
+      lastActivityAt: "2026-11-23T10:00:00.000Z",
+      candidateSources: ["carry_over"],
+    });
+  });
+
+  test("marks observation incomplete when GraphQL returns errors", async () => {
+    const source = new GitLabDataSource({
+      popularLimit: 0,
+      activeLimit: 0,
+      requestBudget: 2,
+      fetch: async () =>
+        new Response(
+          JSON.stringify({ errors: [{ message: "Query complexity too high" }] }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    });
+
+    const result = await source.observe([
+      { repositoryId: "14360", fullName: "tigefa/mybb" },
+    ]);
+
+    expect(result.complete).toBe(false);
+    expect(result.errors).toEqual([
+      "GitLab GraphQL error: Query complexity too high",
+    ]);
+  });
+
+  test("fails fast without sleeping when Retry-After exceeds max retry delay", async () => {
+    let attempts = 0;
+    const startedAt = Date.now();
+    const source = new GitLabDataSource({
+      popularLimit: 1,
+      activeLimit: 0,
+      requestBudget: 4,
+      retryDelayMilliseconds: 10,
+      maxRetryDelayMilliseconds: 1_000,
+      fetch: async () => {
+        attempts += 1;
+        return new Response("Rate limit exceeded", {
+          status: 429,
+          headers: { "retry-after": "3600" },
+        });
+      },
+    });
+
+    const result = await source.discover();
+    const elapsedMs = Date.now() - startedAt;
+
+    expect(attempts).toBe(1);
+    expect(elapsedMs).toBeLessThan(500);
+    expect(result.complete).toBe(false);
+    expect(result.errors[0]).toContain("GitLab API 429");
   });
 });
